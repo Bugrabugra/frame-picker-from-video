@@ -1,3 +1,4 @@
+import os.path
 import pathlib
 import tkinter as tk
 from tkinter import filedialog as fd
@@ -5,8 +6,6 @@ from tkinter import messagebox as mb
 from tkinter import PhotoImage
 import cv2
 
-
-# parametreleri ekle
 
 class Window:
     def __init__(self):
@@ -21,7 +20,8 @@ class Window:
             "image": 3,
             "frame_name_label": 4,
             "navigation_buttons_frame": 5,
-            "delete_frame_button": 6
+            "delete_frame_checkbox": 6,
+            "delete_frames_button": 7
         }
         self.label = None
         self.img = None
@@ -32,26 +32,57 @@ class Window:
         self.frame_rate = 1
         self.frame_name_label = None
         self.frame_rate_input = None
+        self.delete_frame_checkbox = None
+        self.deletion_array = []
         self.root = tk.Tk()
         self.navigation_buttons_frame = tk.Frame(self.root)
         self.root.title("Frame Picker")
         self.frames_folder_location_button_packer()
         self.root.mainloop()
 
-    def delete_frame(self):
-        print()
+    def delete_frames(self):
+        for index, frames_to_be_deleted in enumerate(self.deletion_array):
+            if frames_to_be_deleted == 1:
+                file_to_be_deleted = self.frames_folder_location + "/" + str(index + 1) + ".png"
+                if os.path.isfile(file_to_be_deleted):
+                    os.remove(file_to_be_deleted)
+        self.root.destroy()
 
-    def open_confirm_delete_dialog(self):
-        is_delete = mb.askyesno("Delete", "Are you sure you want to delete his frame?")
-        if is_delete:
-            self.delete_frame()
+    def ask_deleting_all_selected_frames(self):
+        delete_all_selected_frames_dialog = mb.askyesno(
+            "Delete?", "Are you sure you want to delete all selected frames?"
+        )
+        if delete_all_selected_frames_dialog:
+            self.delete_frames()
+
+    def delete_frames_button_packer(self):
+        delete_frames_button = tk.Button(
+            self.root, text = "Delete selected frames", command = self.ask_deleting_all_selected_frames
+        )
+        delete_frames_button.grid(
+            row = self.dictWidgetRows["delete_frames_button"], column = 0, columnspan = 2, padx = 16, pady = 6
+        )
+
+    def check_checkbox_state(self):
+        if self.deletion_array[self.image_pos] == 1:
+            self.delete_frame_checkbox.select()
+        else:
+            self.delete_frame_checkbox.deselect()
+
+    def toggle_deletion(self):
+        if self.deletion_array[self.image_pos] == 0:
+            self.deletion_array[self.image_pos] = 1
+        else:
+            self.deletion_array[self.image_pos] = 0
+        print(self.deletion_array)
 
     def delete_frame_button_packer(self):
-        delete_frame_button = tk.Button(
-            self.root, text = "Delete frame", bg = "#FF6347", command = self.open_confirm_delete_dialog
+        self.delete_frame_checkbox = None
+        self.delete_frame_checkbox = tk.Checkbutton(
+            self.root, text = "Delete frame?", onvalue = 1, offvalue = 0, command = self.toggle_deletion
         )
-        delete_frame_button.grid(
-            row = self.dictWidgetRows["delete_frame_button"], column = 0, columnspan = 2, padx = 16, pady = 6
+        self.delete_frame_checkbox.grid(
+            row = self.dictWidgetRows["delete_frame_checkbox"], column = 0, columnspan = 2, padx = 16, pady = 6
         )
 
     def frame_rate_packer(self):
@@ -132,16 +163,22 @@ class Window:
             self.video_button_packer()
 
     def show_next_image(self, order):
+        self.delete_frame_button_packer()
+
         if order == 1:
             if self.image_pos < len(self.images) - 1:
                 self.image_pos += order
             else:
                 self.image_pos = 0
-        else:
+
+            self.check_checkbox_state()
+        elif order == -1:
             if self.image_pos > 0:
                 self.image_pos += order
             else:
                 self.image_pos = 0
+
+            self.check_checkbox_state()
 
         self.frame_name_label["text"] = str(self.image_pos + 1) + ".png"
         self.img = PhotoImage(file = self.images[self.image_pos])
@@ -178,6 +215,7 @@ class Window:
         success = self.get_frame(sec, video, count)
         while success:
             count = count + 1
+            self.deletion_array.append(0)
             sec = sec + self.frame_rate
             sec = round(sec, 2)
             success = self.get_frame(sec, video, count)
@@ -188,6 +226,7 @@ class Window:
         self.frame_name_label_packer()
         self.navigation_buttons_frame_packer()
         self.delete_frame_button_packer()
+        self.delete_frames_button_packer()
 
 
 win = Window()

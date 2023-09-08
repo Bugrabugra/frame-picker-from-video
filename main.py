@@ -41,12 +41,15 @@ class Window:
         self.root.mainloop()
 
     def delete_frames(self):
-        for index, frames_to_be_deleted in enumerate(self.deletion_array):
-            if frames_to_be_deleted == 1:
-                file_to_be_deleted = self.frames_folder_location + "/" + str(index + 1) + ".png"
-                if os.path.isfile(file_to_be_deleted):
-                    os.remove(file_to_be_deleted)
-        self.root.destroy()
+        if 1 in self.deletion_array:
+            for index, frames_to_be_deleted in enumerate(self.deletion_array):
+                if frames_to_be_deleted == 1:
+                    file_to_be_deleted = self.frames_folder_location + "/" + str(index + 1) + ".png"
+                    if os.path.isfile(file_to_be_deleted):
+                        os.remove(file_to_be_deleted)
+            self.root.destroy()
+        else:
+            mb.showinfo("Info", "No frames was selected!")
 
     def ask_deleting_all_selected_frames(self):
         delete_all_selected_frames_dialog = mb.askyesno(
@@ -74,7 +77,6 @@ class Window:
             self.deletion_array[self.image_pos] = 1
         else:
             self.deletion_array[self.image_pos] = 0
-        print(self.deletion_array)
 
     def delete_frame_button_packer(self):
         self.delete_frame_checkbox = None
